@@ -1,6 +1,5 @@
 # ExnestAI Python SDK
 
-[![CI](https://github.com/fazza-abiyyu/sdk-exnestai-py/actions/workflows/ci.yml/badge.svg)](https://github.com/fazza-abiyyu/sdk-exnestai-py/actions/workflows/ci.yml)
 [![PyPI version](https://badge.fury.io/py/exnestai.svg)](https://badge.fury.io/py/exnestai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
