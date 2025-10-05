@@ -1,42 +1,62 @@
+
 """
 ExnestAI Python SDK
-A Python client for the ExnestAI API service
+
+Main export point for all ExnestAI client services and models.
 """
 
-from .wrapper import ExnestAIWrapper
+# Main client classes
 from .client import ExnestAI
+from .wrapper import ExnestWrapper
+
+# Data models
 from .models import (
-    ExnestMessage, 
-    ExnestResponse, 
-    ExnestStreamChunk, 
-    ExnestClientOptions, 
-    ExnestChatOptions,
+    ExnestMessage,
+    Billing,
+    Links,
+    ExnestErrorDetails,
+    ExnestMetadata,
+    Error,
+    Usage,
+    ExnestBaseResponse,
+    ChatChoice,
+    ExnestChatResponse,
+    CompletionChoice,
+    ExnestCompletionResponse,
+    Delta,
+    StreamChoice,
+    ExnestStreamChunk,
+    Provider,
+    Pricing,
+    Limits,
     ExnestModel,
-    ExnestModelProvider,
-    ExnestModelPricing,
-    ExnestModelLimits,
-    ExnestUsage,
-    ExnestChoice,
-    ExnestResponseData,
-    ExnestMeta
+    ExnestResponse
 )
 
-__version__ = "1.0.0"
-__author__ = "Fazza Abiyyu"
 __all__ = [
-    "ExnestAIWrapper",
+    # Classes
     "ExnestAI",
+    "ExnestWrapper",
+
+    # Models
     "ExnestMessage",
-    "ExnestResponse",
+    "Billing",
+    "Links",
+    "ExnestErrorDetails",
+    "ExnestMetadata",
+    "Error",
+    "Usage",
+    "ExnestBaseResponse",
+    "ChatChoice",
+    "ExnestChatResponse",
+    "CompletionChoice",
+    "ExnestCompletionResponse",
+    "Delta",
+    "StreamChoice",
     "ExnestStreamChunk",
-    "ExnestClientOptions",
-    "ExnestChatOptions",
+    "Provider",
+    "Pricing",
+    "Limits",
     "ExnestModel",
-    "ExnestModelProvider",
-    "ExnestModelPricing",
-    "ExnestModelLimits",
-    "ExnestUsage",
-    "ExnestChoice",
-    "ExnestResponseData",
-    "ExnestMeta"
+    "ExnestResponse"
 ]
