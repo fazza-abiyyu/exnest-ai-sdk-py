@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 write_to = "exnestai/_version.py"
 
 [project]
-name = "exnestai"
+name = "exnest-ai"
 dynamic = ["version"]
 # Version is managed by setuptools-scm
 description = "Python SDK for ExnestAI API service"
