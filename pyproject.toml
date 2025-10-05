@@ -3,10 +3,11 @@ requires = ["setuptools>=45", "wheel", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-write_to = "src/exnestai/_version.py"
+write_to = "exnestai/_version.py"
 
 [project]
 name = "exnestai"
+dynamic = ["version"]
 # Version is managed by setuptools-scm
 description = "Python SDK for ExnestAI API service"
 readme = "README.md"
