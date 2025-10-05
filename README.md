@@ -1,220 +1,183 @@
 # ExnestAI Python SDK
 
-[![PyPI version](https://badge.fury.io/py/exnestai.svg)](https://badge.fury.io/py/exnestai)
+[![PyPI version](https://badge.fury.io/py/exnest-ai.svg)](https://badge.fury.io/py/exnest-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This is the Python SDK for the ExnestAI API service. It provides both a simple wrapper and an advanced client for interacting with the ExnestAI API.
+This is the Python SDK for the ExnestAI API service. It provides both a simple wrapper and an advanced, fully-featured client for interacting with the ExnestAI API, with a response format compatible with OpenAI.
 
 ## Installation
 
 ```bash
-pip install exnestai
+pip install exnest-ai
 ```
 
 ## Quick Start
 
+Make sure to set your API key as an environment variable:
+```bash
+export EXNEST_API_KEY="your-api-key-here"
+```
+
 ### Simple Wrapper Usage
 
+For straightforward use cases, the `ExnestWrapper` provides a simple interface.
+
 ```python
-from exnestai.wrapper import ExnestAIWrapper
-from exnestai.models import ExnestMessage
+import asyncio
+import os
+from exnestai import ExnestWrapper, ExnestMessage
 
-# Initialize the wrapper
-exnest = ExnestAIWrapper("your-api-key-here")
+async def main():
+    # Initialize the wrapper
+    api_key = os.getenv("EXNEST_API_KEY")
+    exnest = ExnestWrapper(api_key=api_key)
 
-# Simple chat
-response = await exnest.chat("gpt-4o-mini", [
-    ExnestMessage(role="user", content="Hello, how are you?")
-])
+    # Perform a chat completion
+    chat_response = await exnest.chat(
+        model="openai:gpt-4o-mini",
+        messages=[ExnestMessage(role="user", content="Hello, how are you?")]
+    )
+    if not chat_response.error:
+        print(f"Wrapper Chat Response: {chat_response.choices[0].message.content}")
 
-print(response)
+    # Perform a text completion
+    completion_response = await exnest.completion(
+        model="openai:gpt-4o-mini",
+        prompt="What is the capital of France?",
+        max_tokens=50
+    )
+    if not completion_response.error:
+        print(f"Wrapper Completion Response: {completion_response.choices[0].text}")
 
-# Quick response
-result = await exnest.response("gemini-2.0-flash-exp", "What is Python?")
-
-# Get models
-models = await exnest.get_models()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ### Advanced Client Usage
 
+For full control over configuration, retries, and timeouts, use the `ExnestAI` client.
+
 ```python
-from exnestai.client import ExnestAI
-from exnestai.models import ExnestClientOptions, ExnestChatOptions, ExnestMessage
+import asyncio
+import os
+from exnestai import ExnestAI, ExnestMessage
 
-# Initialize the advanced client
-exnest = ExnestAI(ExnestClientOptions(
-    api_key="your-api-key-here",
-    timeout=30,
-    retries=3,
-    debug=True
-))
-
-# Advanced chat with options
-response = await exnest.chat(
-    "gemini-2.0-flash-exp",
-    [
-        ExnestMessage(role="system", content="You are a helpful assistant."),
-        ExnestMessage(role="user", content="Explain async/await in Python")
-    ],
-    ExnestChatOptions(
-        temperature=0.7,
-        max_tokens=500,
-        timeout=15
+async def main():
+    api_key = os.getenv("EXNEST_API_KEY")
+    
+    # Initialize the advanced client
+    client = ExnestAI(
+        api_key=api_key,
+        timeout=60000,  # 60 seconds
+        retries=2,
+        debug=True
     )
-)
 
-print(response)
-```
+    # Perform a chat completion with Exnest metadata
+    chat_response = await client.chat(
+        model="openai:gpt-4o-mini",
+        messages=[ExnestMessage(role="user", content="Hello! What can you tell me about ExnestAI?")],
+        exnest_metadata=True
+    )
 
-## Features
+    if chat_response.error:
+        print(f"API Error: {chat_response.error.message}")
+    else:
+        print(f"Advanced Chat Response: {chat_response.choices[0].message.content}")
+        if chat_response.exnest and chat_response.exnest.billing:
+            print(f"Cost: {chat_response.exnest.billing.actual_cost_usd} USD")
 
-- **Simple Wrapper**: Lightweight interface for basic AI interactions
-- **Advanced Client**: Full configuration options with error handling and retry logic
-- **Streaming Responses**: Support for real-time streaming of AI responses
-- **Model Management**: Access to all available models and model information
-- **Error Handling**: Comprehensive error handling with automatic retries
-- **Async Support**: Fully asynchronous implementation for better performance
-
-## API Reference
-
-### ExnestMessage
-```python
-class ExnestMessage:
-    role: str  # "system", "user", or "assistant"
-    content: str
-```
-
-### ExnestResponse
-```python
-class ExnestResponse:
-    success: bool
-    status_code: int
-    message: str
-    data: Optional[ExnestResponseData]
-    error: Optional[Dict[str, Any]]
-    meta: Optional[ExnestMeta]
-```
-
-## Authentication
-
-The API supports Bearer token authentication:
-
-```python
-# Using the Authorization header (recommended)
-exnest = ExnestAI(ExnestClientOptions(
-    api_key="your-api-key-here"
-))
-```
-
-## Configuration Options
-
-### ExnestClientOptions
-```python
-class ExnestClientOptions:
-    api_key: str           # Required: Your ExnestAI API key
-    base_url: str          # Optional: API base URL (default: https://api.exnest.app/v1)
-    timeout: int           # Optional: Request timeout in seconds (default: 30)
-    retries: int           # Optional: Number of retries (default: 3)
-    retry_delay: int       # Optional: Delay between retries in seconds (default: 1)
-    debug: bool            # Optional: Enable debug logging (default: False)
-```
-
-### ExnestChatOptions
-```python
-class ExnestChatOptions:
-    temperature: Optional[float]     # Optional: Model temperature (0-2)
-    max_tokens: Optional[int]        # Optional: Maximum tokens to generate
-    timeout: Optional[int]           # Optional: Request-specific timeout
-    openai_compatible: Optional[bool] # Optional: Return OpenAI-compatible format
-    stream: Optional[bool]           # Optional: Enable streaming response
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Streaming Responses
 
-The SDK supports streaming responses for real-time output:
+Both the client and wrapper support streaming for real-time data processing.
 
 ```python
-# Using the advanced client
-async for chunk in exnest.stream(
-    "gpt-4o-mini",
-    [ExnestMessage(role="user", content="Tell me a story")],
-    ExnestChatOptions(max_tokens=300)
-):
-    if chunk.choices and len(chunk.choices) > 0:
-        delta = chunk.choices[0].get("delta", {})
-        content = delta.get("content")
-        if content:
-            print(content, end="", flush=True)
+import asyncio
+import os
+from exnestai import ExnestAI, ExnestMessage
+
+async def stream_demo():
+    api_key = os.getenv("EXNEST_API_KEY")
+    client = ExnestAI(api_key=api_key)
+
+    print("\n--- Streaming Chat Completion ---")
+    print("Streaming response: ", end="")
+    try:
+        async for chunk in client.stream(
+            model="openai:gpt-4o-mini",
+            messages=[ExnestMessage(role="user", content="Tell me a fun fact about Python programming.")]
+        ):
+            if chunk.choices and chunk.choices[0].delta.content:
+                print(chunk.choices[0].delta.content, end="", flush=True)
+        print("\nStreaming complete.")
+    except Exception as e:
+        print(f"\nAn error occurred during streaming: {e}")
+
+if __name__ == "__main__":
+    asyncio.run(stream_demo())
 ```
 
-## Error Handling
+## Features
 
-The advanced client provides comprehensive error handling with automatic retries:
+- **OpenAI-Compatible**: Response formats are compatible with OpenAI's, allowing for easy integration.
+- **Dual Clients**: Choose between a simple `ExnestWrapper` for quick tasks and an advanced `ExnestAI` client for full control.
+- **Async First**: Fully asynchronous architecture using `httpx` for high performance.
+- **Streaming Support**: Built-in support for Server-Sent Events (SSE) for real-time responses.
+- **Retry Logic**: The advanced client includes automatic retries for transient network errors.
+- **Model Management**: Fetch lists of available models.
+- **Billing Metadata**: Option to receive detailed billing and transaction information with each request.
 
-```python
-try:
-    response = await exnest.chat(model, messages)
-    
-    if not response.success:
-        print('API Error:', response.error)
-except Exception as error:
-    print('Network Error:', error)
-```
+## Authentication
 
-## Examples
+The SDK uses Bearer Token authentication by passing your API key to the client constructor. It will be sent in the `Authorization` header.
 
-See `examples.py` for comprehensive usage examples including:
-- Simple wrapper usage
-- Advanced client configuration
-- Streaming responses
-- Error handling patterns
-- Configuration updates
-- Model operations
-- Controller integration
+## Configuration
+
+The `ExnestAI` client can be configured during initialization:
+
+- `api_key` (str): **Required**. Your ExnestAI API key.
+- `base_url` (str): Optional. The base URL for the API. Defaults to `https://api.exnest.app/v1`.
+- `timeout` (int): Optional. Request timeout in milliseconds. Defaults to `30000`.
+- `retries` (int): Optional. Number of times to retry a failed request. Defaults to `3`.
+- `retry_delay` (int): Optional. Delay between retries in milliseconds. Defaults to `1000`.
+- `debug` (bool): Optional. Set to `True` to enable debug printing. Defaults to `False`.
 
 ## Requirements
 
-- Python 3.8+
-- httpx 0.23.0+
+- Python 3.7+
+- `httpx`
 
 ## Development
 
-### Setup
+To set up the development environment:
+
 ```bash
 # Clone the repository
-git clone https://github.com/fazza-abiyyu/sdk-exnestai-py.git
-cd sdk-exnestai-py
+git clone https://github.com/fazza-abiyyu/exnest-ai-sdk-py.git
+cd exnest-ai-sdk-py
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Install development dependencies
-pip install pytest pytest-asyncio
+# Install for local development
+pip install -e .
 ```
 
 ### Testing
+
+To run tests:
 ```bash
-# Run all tests
-python -m pytest tests/ -v
+pytest
 ```
-
-## Git Workflow
-
-See [GIT_WORKFLOW.md](GIT_WORKFLOW.md) for detailed information about our Git workflow.
-
-## License
-
-MIT License
 
 ## Contributing
 
-1. Fork it
-2. Create your feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Create a new Pull Request
+Contributions are welcome! Please feel free to fork the repository, make changes, and submit a pull request.
 
-## Changelog
+## License
 
-See [CHANGELOG.md](CHANGELOG.md) for detailed information about changes in each release.
+This project is licensed under the MIT License.
