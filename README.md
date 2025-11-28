@@ -55,12 +55,12 @@ if __name__ == "__main__":
 
 ### Advanced Client Usage
 
-For full control over configuration, retries, and timeouts, use the `ExnestAI` client.
+For full control over configuration, retries, timeouts, and access to **EBC (Exnest Brain Core)** features, use the `ExnestAI` client.
 
 ```python
 import asyncio
 import os
-from exnestai import ExnestAI, ExnestMessage
+from exnestai import ExnestAI, ExnestMessage, EBCDecisionContext
 
 async def main():
     api_key = os.getenv("EXNEST_API_KEY")
@@ -73,19 +73,46 @@ async def main():
         debug=True
     )
 
-    # Perform a chat completion with Exnest metadata
+    # --- Standard Chat ---
     chat_response = await client.chat(
         model="openai:gpt-4o-mini",
         messages=[ExnestMessage(role="user", content="Hello! What can you tell me about ExnestAI?")],
         exnest_metadata=True
     )
+    if not chat_response.error:
+        print(f"Chat Response: {chat_response.choices[0].message.content}")
 
-    if chat_response.error:
-        print(f"API Error: {chat_response.error.message}")
-    else:
-        print(f"Advanced Chat Response: {chat_response.choices[0].message.content}")
-        if chat_response.exnest and chat_response.exnest.billing:
-            print(f"Cost: {chat_response.exnest.billing.actual_cost_usd} USD")
+    # --- EBC Deep Think Analysis ---
+    # Performs advanced reasoning and decision making
+    deep_think_response = await client.deep_think(
+        messages=[ExnestMessage(role="user", content="Analyze the potential impact of quantum computing on cryptography")],
+        model="deepseek-r1" # Optional: specify EBC model
+    )
+    if not deep_think_response.error:
+        print(f"\nDeep Think Response: {deep_think_response.choices[0].message.content}")
+
+    # --- EBC Structured Decision Making ---
+    # Performs structured analysis based on decision context
+    decision_context = EBCDecisionContext(
+        decisionType="technical_architecture",
+        criteria=["scalability", "maintainability", "cost"],
+        constraints=["must be open source", "budget < $500/month"]
+    )
+    
+    decision_response = await client.structured_decision(
+        messages=[ExnestMessage(role="user", content="Should we migrate our database to NoSQL?")],
+        context=decision_context
+    )
+    if not decision_response.error:
+        print(f"\nStructured Decision: {decision_response.choices[0].message.content}")
+
+    # --- EBC Task Delegation ---
+    # Quick reasoning for task delegation and action dispatch
+    delegate_response = await client.delegate(
+        messages=[ExnestMessage(role="user", content="Email the team about the meeting delay")]
+    )
+    if not delegate_response.error:
+        print(f"\nDelegation Response: {delegate_response.choices[0].message.content}")
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -125,11 +152,23 @@ if __name__ == "__main__":
 
 - **OpenAI-Compatible**: Response formats are compatible with OpenAI's, allowing for easy integration.
 - **Dual Clients**: Choose between a simple `ExnestWrapper` for quick tasks and an advanced `ExnestAI` client for full control.
+- **EBC Capabilities**: Access Exnest Brain Core features like Deep Think, Structured Decision, and Task Delegation.
 - **Async First**: Fully asynchronous architecture using `httpx` for high performance.
 - **Streaming Support**: Built-in support for Server-Sent Events (SSE) for real-time responses.
 - **Retry Logic**: The advanced client includes automatic retries for transient network errors.
 - **Model Management**: Fetch lists of available models.
 - **Billing Metadata**: Option to receive detailed billing and transaction information with each request.
+
+## Currently Available Models
+
+The services currently support the following AI models:
+
+- **OpenAI**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
+- **Google**: `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-2.5-flash`, `gemini-2.5-pro`
+- **Moonshot**: `kimi-k2-0711-preview`, `kimi-k2-0905-preview`, `kimi-k2-turbo-preview`, `moonshot-v1-8k`, `moonshot-v1-32k`, `moonshot-v1-128k`
+- **LongCat**: `LongCat-Flash-Chat`, `LongCat-Flash-Thinking`
+
+*Note: More models will be added in the future*
 
 ## Authentication
 
@@ -148,7 +187,7 @@ The `ExnestAI` client can be configured during initialization:
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.8+
 - `httpx`
 
 ## Development

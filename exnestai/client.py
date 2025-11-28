@@ -9,7 +9,8 @@ from .models import (
     ExnestCompletionResponse,
     ExnestStreamChunk,
     ExnestResponse,
-    ExnestModel
+    ExnestModel,
+    EBCDecisionContext
 )
 
 class ExnestAI:
@@ -134,18 +135,101 @@ class ExnestAI:
         async for chunk in self._execute_stream_request("/chat/completions", body):
             yield chunk
 
-    async def get_models(self) -> List[ExnestModel]:
-        response_data = await self._execute_request("GET", "/models")
-        # Assuming the response is a list of model dicts
-        return [ExnestModel(**model_data) for model_data in response_data]
+    async def responses(self, model: str, input_str: str, max_tokens: int = 200) -> ExnestChatResponse:
+        """
+        Simple response method for single-turn conversations
+        """
+        if not input_str:
+            raise ValueError("Input must be a non-empty string")
+        
+        return await self.chat(model, [ExnestMessage(role="user", content=input_str)], max_tokens=max_tokens)
 
-    async def get_model(self, model_name: str) -> ExnestModel:
-        response_data = await self._execute_request("GET", f"/models/{model_name}")
+    async def deep_think(self, messages: List[ExnestMessage], **kwargs) -> ExnestChatResponse:
+        """
+        EBC Deep Think Analysis
+        Performs advanced reasoning and decision making
+        """
+        body = {
+            "messages": [msg.__dict__ for msg in messages],
+            **kwargs
+        }
+        response_data = await self._execute_request("POST", "/ebc/deep-think", body)
+        return ExnestChatResponse(**response_data)
+
+    async def structured_decision(
+        self, messages: List[ExnestMessage], context: EBCDecisionContext, **kwargs
+    ) -> ExnestChatResponse:
+        """
+        EBC Structured Decision Making
+        Performs structured analysis based on decision context
+        """
+        body = {
+            "messages": [msg.__dict__ for msg in messages],
+            "context": context.__dict__,
+            **kwargs
+        }
+        response_data = await self._execute_request("POST", "/decision-making/session", body)
+        return ExnestChatResponse(**response_data)
+
+    async def delegate(self, messages: List[ExnestMessage], **kwargs) -> ExnestChatResponse:
+        """
+        EBC Task Delegation
+        Quick reasoning for task delegation and action dispatch
+        """
+        body = {
+            "messages": [msg.__dict__ for msg in messages],
+            **kwargs
+        }
+        response_data = await self._execute_request("POST", "/ebc/delegate", body)
+        return ExnestChatResponse(**response_data)
+
+    async def get_models(self, openai_compatible: bool = False) -> Union[List[ExnestModel], Dict[str, Any]]:
+        params = {}
+        if openai_compatible:
+            params["openai_compatible"] = "true"
+            
+        response_data = await self._execute_request("GET", "/models", params=params)
+        
+        # Handle v1 response wrapper if not openai compatible
+        if not openai_compatible and isinstance(response_data, dict) and "data" in response_data:
+             if "models" in response_data["data"]:
+                 response_data = response_data["data"]["models"]
+        
+        if isinstance(response_data, list):
+            return [ExnestModel(**model_data) for model_data in response_data]
+        return response_data
+
+    async def get_model(self, model_name: str, openai_compatible: bool = False) -> Union[ExnestModel, Dict[str, Any]]:
+        params = {}
+        if openai_compatible:
+            params["openai_compatible"] = "true"
+
+        response_data = await self._execute_request("GET", f"/models/{model_name}", params=params)
+        
+        # Handle v1 response wrapper
+        if not openai_compatible and isinstance(response_data, dict) and "data" in response_data:
+            response_data = response_data["data"]
+
+        if openai_compatible:
+             return response_data
+             
         return ExnestModel(**response_data)
 
-    async def get_models_by_provider(self, provider: str) -> List[ExnestModel]:
-        response_data = await self._execute_request("GET", f"/models/provider/{provider}")
-        return [ExnestModel(**model_data) for model_data in response_data]
+    async def get_models_by_provider(self, provider: str, openai_compatible: bool = False) -> Union[List[ExnestModel], Dict[str, Any]]:
+        params = {}
+        if openai_compatible:
+            params["openai_compatible"] = "true"
+
+        response_data = await self._execute_request("GET", f"/models/provider/{provider}", params=params)
+        
+        # Handle v1 response wrapper
+        if not openai_compatible and isinstance(response_data, dict) and "data" in response_data:
+             if "models" in response_data["data"]:
+                 response_data = response_data["data"]["models"]
+
+        if isinstance(response_data, list):
+            return [ExnestModel(**model_data) for model_data in response_data]
+        return response_data
 
     def get_config(self) -> Dict[str, Any]:
         return {

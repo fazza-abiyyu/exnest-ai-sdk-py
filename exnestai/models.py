@@ -128,4 +128,11 @@ class ExnestModel:
     isActive: bool
     createdAt: str
 
+@dataclass
+class EBCDecisionContext:
+    decisionType: str
+    criteria: List[str]
+    constraints: Optional[List[str]] = None
+    preferences: Optional[Dict[str, Any]] = None
+
 ExnestResponse = Union[ExnestChatResponse, ExnestCompletionResponse]
